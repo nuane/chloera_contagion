@@ -1,0 +1,41 @@
+{ "frames": {
+   "water_pump 0.png": {
+    "frame": { "x": 0, "y": 0, "w": 5, "h": 10 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 5, "h": 10 },
+    "sourceSize": { "w": 5, "h": 10 },
+    "duration": 100
+   },
+   "water_pump 1.png": {
+    "frame": { "x": 5, "y": 0, "w": 5, "h": 10 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 5, "h": 10 },
+    "sourceSize": { "w": 5, "h": 10 },
+    "duration": 100
+   },
+   "water_pump 2.png": {
+    "frame": { "x": 10, "y": 0, "w": 5, "h": 10 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 5, "h": 10 },
+    "sourceSize": { "w": 5, "h": 10 },
+    "duration": 100
+   }
+ },
+ "meta": {
+  "app": "http://www.aseprite.org/",
+  "version": "1.2.21-dev",
+  "format": "RGBA8888",
+  "size": { "w": 15, "h": 10 },
+  "scale": "1",
+  "frameTags": [
+  ],
+  "layers": [
+   { "name": "Layer", "opacity": 255, "blendMode": "normal" }
+  ],
+  "slices": [
+  ]
+ }
+}

@@ -1,15 +1,23 @@
 import Phaser from "phaser";
 
 import house from './house';
+import start from './start';
+import end from './end';
 
 const config = {
   type: Phaser.AUTO,
-  parent: "phaser-example",
-  width: 640,
-  height: 400,
+  scale: {
+    mode: Phaser.Scale.FIT,
+    parent: "phaser-example",
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: 320,
+    height: 200,
+  },
   scene:
   [
+    start,
     house,
+    end,
   ],
 };
 

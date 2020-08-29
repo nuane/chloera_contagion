@@ -1,5 +1,12 @@
-import Hero from './hero';
+import Dialogue from './dialogue';
 import {Delaunay} from 'd3-delaunay';
+
+import textUI from './textUI';
+
+// case 'residential' : return "0x008080";
+// case 'commercial' : return "0x008080";
+// case 'industrial': return "0xFF69b4";
+// case 'road': return "0x303030";
 
 class House extends Phaser.Scene {
   constructor() {
@@ -14,66 +21,82 @@ class House extends Phaser.Scene {
     });
   }
   preload() {
-    this.load.image('tiles', 'assets/sample_indoor_kenny.png');
-    this.load.image('white_square', 'assets/white_square.png');
-    this.load.image('black_dot', 'assets/black_dot.png');
+    this.load.audio('shot', 'assets/s_atari_lasershot.wav');
+    this.load.audio('cycle', 'assets/s_dead.wav');
+    this.load.audio('click', 'assets/s_click.wav');
 
-    this.load.tilemapTiledJSON('map', 'assets/sample_indoor1.json');
-    // this.load.tilemapTiledJSON('map', 'assets/this.cityGrid.json');
+    // this.load.image('white_square', 'assets/white_square.png');
+    // this.load.image('black_dot', 'assets/black_dot.png');
+    this.load.image('white_dot', 'assets/white_dot.png');
+    this.load.image('tile0', 'assets/tile-000.png');
 
-    this.load.atlas('player', 'assets/rpg_basic_opt.png','assets/rpg_basic.json');
+    this.load.image('road', 'assets/tile-road.png');
+    this.load.image('residential', 'assets/tile-home.png');
+    this.load.image('commercial', 'assets/tile-home.png');
+    this.load.image('industrial', 'assets/tile-industrial.png');
 
 
-    this.load.scenePlugin({
-      key: 'rexuiplugin',
-      url: 'assets/rexuiplugin.min.js',
-      sceneKey: 'rexUI'
-    });
+    this.load.image('water_pump', 'assets/water_pump.png');
+
+    this.load.image('test', 'assets/_test.png');
+    this.load.image('overlay', 'assets/overlay.png');
+    // this.load.image('tile0', 'assets/tile0.png');
+    // this.load.image('tile1', 'assets/tile1.png');
+    // this.load.image('tile2', 'assets/tile2.png');
+    // this.load.image('tile3', 'assets/tile3.png');
+    // this.load.image('tile4', 'assets/tile4.png');
+
+
+    this.load.image('face0', 'assets/8bit_face0.png');
+    this.load.image('face1', 'assets/8bit_face1.png');
+    this.load.image('face2', 'assets/8bit_face2.png');
+    this.load.image('face3', 'assets/8bit_face3.png');
+    this.load.image('face4', 'assets/8bit_face4.png');
+    this.load.image('face5', 'assets/8bit_face5.png');
+
+
 
   }
 
   create(){
     this.input.keyboard.on('keydown', this.handleKey, this);
 
-    this.mapUIOverlay = this.add.text(0, 0, '', { fontFamily: 'Arial', fontSize: 64, color: '#00ff00' });
-    this.mapUIOverlay.depth = 5;
+    this.dialogueUI = this.add.container(0, 0).setVisible(false);
+    this.dialogueUI.background = this.add.image(0, 0, 'overlay').setOrigin(0);
+    this.dialogueUI.add(this.dialogueUI.background);
+    this.dialogueUI.depth = 12;
 
-    let tileSize = 16;
-    const getColor = (zone) => {
-      switch (zone) {
-        case 'residential' : return "0x008080";
-        case 'commercial' : return "0x008080";
-        case 'industrial': return "0xFF69b4";
-        case 'road': return "0x303030";
-      }
-    }
 
+    // this.textUI = this.add.text(10, 10, '', { fontFamily: 'Arial', fontSize: 24, color: '#000000' });
+    // this.textUI.depth = 11;
+    this.textUI = new textUI(this, 10, 10);
+
+    this.score = 2000;
+    this.reputation = 0;
+
+
+    this.shotSound = this.sound.add('shot');
+    this.cycleSound = this.sound.add('cycle');
+    this.clickSound = this.sound.add('click');
+
+    let tileSize = 5;
+  
     //drawCityGrid uses algorithm from her' https://stackoverflow.com/questions/48318881/generating-a-city-town-on-a-grid-simply-my-approach
     //returns 2d array of cells
-    this.cityGrid = this.drawCityGrid(40, 26, 16);
+    let gridWidth = this.game.config.width / tileSize;
+    let gridHeight = this.game.config.height / tileSize;
+
+    let offSet = 4;
+    let numOfPumps = 40;
+
+    this.cityGrid = this.drawCityGrid(gridWidth-offSet, gridHeight-offSet, tileSize);
     this.allCityCells = [];
     this.cityPlanner = {};
-    this.cityWaterPumps = [];
 
-
-    //creates set of points to be used as waterpumps
-    for (let i = 1; i < 15; i++){
-      let validPoint = true;
-      while (validPoint){
-        let x = Phaser.Math.Between(0, 39);
-        let y = Phaser.Math.Between(0, 24);
-        if (this.cityGrid[y][x].type === 'road')
-        {
-          this.cityWaterPumps.push(this.cityGrid[y][x]);
-          validPoint = false;
-        }
-      }
-    }
 
     for (let y of this.cityGrid) {
       for (let cell of y){
         // this.groundLayer.putTileAt(cell.type, cell.j, cell.i);
-        let color = getColor(cell.type);
         //if not a road push to cityPlanner
         if (cell.type !== 'road'){
           if (!this.cityPlanner[cell.id]) this.cityPlanner[cell.id] = [];
@@ -82,52 +105,147 @@ class House extends Phaser.Scene {
         }
 
         //setting block color here
-        cell.sprite = this.add.image(cell.j*tileSize, cell.i*tileSize, 'white_square').setTint(color).setInteractive();
+        let tileSprite = `${cell.type}`
+        cell.sprite = this.add.image((cell.j+2)*tileSize, (cell.i+2)*tileSize, tileSprite).setInteractive().setOrigin(0);
 
         cell.state = {
           atRisk: false, infected: false, immune: false,
           healthy: true,
         }
         cell.influenza = 0;
-        cell.poisoned = 0
+        cell.influenzaRisk = true;
 
         cell.atRisk = false;
         cell.infected = false;
         cell.immune = false;
-        cell.timeToHeal = Phaser.Math.Between(10, 20);
+        cell.timeToHeal = Phaser.Math.Between(30, 120);
 
-        cell.health = Phaser.Math.Between(3, 7);
-        cell.deaths = [];
+        cell.health = Phaser.Math.Between(7, 17);
+        cell.deathCounters = this.add.container(cell.x, cell.y)
+          .setAlpha(1); //comment to see all counters
 
 
         cell.sprite.on('pointerover', function (event) {
-          this.mapUIOverlay.setText(`${cell.id}`);
-          this.cityPlanner[cell.id].forEach(cell => cell.sprite.setAlpha(0.7));
+
+          this.cityPlanner[cell.id].forEach(cell => cell.sprite.setAlpha(0.9));
         }, this);
         cell.sprite.on('pointerout', function (event) {
           this.cityPlanner[cell.id].forEach(cell => cell.sprite.clearAlpha());
         }, this);
-        cell.sprite.on('pointerdown', function (event) {
+        cell.sprite.on('pointerdown', function(event) {
+
           let test0 = this.cityPlanner[cell.id].filter(cell => cell.infected);
-          // let test1 = this.cityPlanner[cell.id].map(c => c.deaths).reduce((sum, cur) => sum + cur, 0);
-          let test1 = this.cityPlanner[cell.id].map(c => c.deaths);//.reduce((sum, cur) => sum + cur, 0);
-          // console.log(cell, this.cityPlanner[cell.id]);
-          console.log(test1);
+          let test1 = this.cityPlanner[cell.id].filter(c => c.deaths);//.reduce((sum, cur) => sum + cur, 0);
+          // console.log(test0, test1);
+          this.cityPlanner[cell.id].forEach(c => c.deathCounters.setAlpha(1));
+
+
+          this.dialogueUI.removeAll();
+          this.dialogueUI.add(this.dialogueUI.background);
+          // this.dialogueUI.setVisible(true);
+          this.dialogueUI.flag = true;
+
+          let rndFace = `face` + Phaser.Math.Between(0,5);
+
+          let face = this.add.image(100, 100, rndFace);
+          let allText = [
+            `What can I do for yer'`,
+            `I don't know what you been talking about, but I'm talking about the real issues`,
+            `Please to bother ya. But do ya' know the time. I don't...`,
+            `Will I be safe doc?`,
+            `Please! Won't somebody think of the children`,
+          ];
+          let rnd = Phaser.Math.Between(0,4);
+          let text = this.add.text(210, 20, allText[rnd], {fontFamily: 'Arial', fontSize: 12, color: '#ffffff', wordWrap: { width: 100 }});
+          let help = this.add.text(210, 120, 'Take Care', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' }).setInteractive()
+            .on('pointerdown', (pointer) => {
+                if (!this.dialogueUI.flag) return;
+                text.setText('Thank you kindly!');
+                this.reputation += 10;
+                this.fastForward = Phaser.Math.Between(1,5);
+                // this.dialogueUI.setVisible(false);
+              // this.dialogueUI.
+                this.dialogueUI.flag = false;
+
+            }, this);
+
+          let audit = this.add.text(210, 140, 'AUDIT', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' }).setInteractive()
+            .on('pointerdown', (pointer) => {
+              if (!this.dialogueUI.flag) return;
+              if (this.reputation > 20) {
+                this.reputation -= 5;
+                this.fastForward = 2;
+                this.cityPlanner[cell.id].forEach(c => {
+                  console.log(c.deathCounters.length);
+                  this.score += c.deathCounters.length;
+                  // c.deathCounters.setAlpha(1)
+                  // console.log(c.deathCounters);
+                  c.deathCounters.list.forEach(count =>{
+                    console.log(count);
+                    this.add.image(count.x, count.y, 'black_dot');
+                  })
+                });
+              } else {
+
+                text.setText('Why should we trust you!');
+
+              }
+              this.dialogueUI.flag = false;
+              // this.dialogueUI.setVisible(false);
+              // this.dialogueUI.
+            }, this);
+          let exit = this.add.text(210, 160, 'EXIT', { fontFamily: 'Arial', fontSize: 12, color: '#ffffff' }).setInteractive()
+            .on('pointerdown', (pointer) => {
+              this.dialogueUI.setVisible(false);
+              // this.dialogueUI.
+            });
+          this.dialogueUI.add([face, help, text, audit, exit]);
+          // this.dialogueUI.bringUpDialgoueScreen(this.cityPlanner[cell.id]);
+
         }, this);
 
       }
     }
-    // let a = this.cityWaterPumps[Phaser.Math.Between(0,this.cityWaterPumps.length)];
-    // a.sprite.setAlpha(0.2);
-    // console.log(a);
-    // this.cityWaterPumps.forEach(pump => pump.sprite.setColor(0x000000));
-    let waterPumpPositions = [];
-    this.cityWaterPumps.forEach(pump => {
-      let ps = pump.sprite;
-      ps.setTint(0xffffff);
-      waterPumpPositions.push([ps.x, ps.y]);
-    });
-    const delaunay = Delaunay.from(waterPumpPositions);
+
+    this.input.on('pointerdown', (pointer) => console.log(pointer.x, pointer.y));
+
+    this.cityWaterPumps = [];
+
+    //creates set of points to be used as waterpumps
+    for (let i = 0; i < numOfPumps; i++){
+      let unvalidPoint = true;
+      while (unvalidPoint){
+        let x = Phaser.Math.Between(0, gridWidth-offSet-1);
+        let y = Phaser.Math.Between(0, gridHeight-offSet-1);
+        if (this.cityGrid[y][x].type === 'road'){
+          //map all water pumps and filter out any with length less than 10
+          if (!this.cityWaterPumps.map(p => Math.pow(p.j-x, 2) + Math.pow(p.i-y, 2)).filter(p => p < 10).length)
+          {
+            this.cityWaterPumps.push(this.cityGrid[y][x]);
+            unvalidPoint = false;
+          }
+        }
+      }
+    }
+
+    //// TODO
+    // this.cityWaterPumps.forEach(p => console.log(p));
+    //create the seed for bad pump in cityWaterPumps
+    let badPumpSeed = Phaser.Math.Between(0, this.cityWaterPumps.length-1);
+    let waterPumpCoordinateMap = [];
+    for (let pump in this.cityWaterPumps) {
+      let ps = this.cityWaterPumps[pump].sprite;
+      let waterPump = this.add.image(ps.x, ps.y, 'water_pump').setInteractive().setOrigin(0,0.8);
+
+      waterPump.on('pointerdown', function (event) {
+        //TODO make end game logic
+        console.log(waterPump);
+        (parseInt(pump) === badPumpSeed) ? this.scene.start('end', this.score+4000) : this.scene.start('end', 'Wrong! Game Over! Blown up!');
+      }, this);
+      waterPumpCoordinateMap.push([ps.x, ps.y]);
+    }
+
+    const delaunay = Delaunay.from(waterPumpCoordinateMap);
     const voronoi = delaunay.voronoi([0, 0, this.game.config.width, this.game.config.height]);
     let polygons = Array.from(voronoi.cellPolygons());
     let voronoi_cell_lines = [];
@@ -136,100 +254,55 @@ class House extends Phaser.Scene {
     let graphics = this.add.graphics({ lineStyle: { width: 2, color: 0xaa6622 } });
 
     //iterate through polygon output to set to game logic
-    this.waterPumpPolygons = [];
+    this.waterPumpPolygonalArea = [];
     for (let polygon of polygons){
       let [index, ...polyPoints] = polygon;
       let phaserPolygon = new Phaser.Geom.Polygon(polyPoints);
-      this.waterPumpPolygons.push(phaserPolygon);
+      this.waterPumpPolygonalArea.push(phaserPolygon);
 
-      graphics.strokePoints(phaserPolygon.points, true);
+      //uncomment to see voronoi lines
+      // graphics.strokePoints(phaserPolygon.points, true);
     }
 
-    let badPump = this.waterPumpPolygons[Phaser.Math.Between(0, this.waterPumpPolygons.length-1)];
+    let badWaterPump = this.waterPumpPolygonalArea[badPumpSeed];
     this.allCityCells.forEach(cell => {
-      //sets district/building as atRisk instead of individual cell in radius of badPump
+      //sets district/building as atRisk instead of individual cell in radius of badWaterPump
       //inificient way to do this since it goes over all the cells multiple times to change the flag
-      if (Phaser.Geom.Polygon.Contains(badPump, cell.sprite.x, cell.sprite.y)) this.cityPlanner[cell.id].forEach(cell => cell.atRisk = true);
+      if (Phaser.Geom.Polygon.Contains(badWaterPump, cell.sprite.x, cell.sprite.y)) this.cityPlanner[cell.id].forEach(cell => cell.atRisk = true);
 
 
     });
 
     this.timerCounter = 0;
-    this.timedEvent = this.time.addEvent({ delay: 100, callback: this.onEvent, callbackScope: this, loop: true });
+    this.timerDelay = 200;
+    // this.timedEvent = this.time.addEvent({ delay: this.timerDelay, callback: this.onEvent, callbackScope: this, loop: true });
+    this.time.addEvent({ delay: this.timerDelay, callback: this.onEvent, callbackScope: this});
+
+    this.choleraDeathsCounter = 0;
+    this.influenzaDeathsCounter = 0;
+    this.otherDeathsCounter = 0;
 
 
-  }
-  onEvent(){
+    // this.camera.main.zoom(4);
 
-    for (let district in this.cityPlanner) {
-
-      // if (Math.random() > 0.998){
-      //   this.cityPlanner[district].forEach(cell => cell.sprite.setTint(0xffffff));
-      // }
-
-    }
-    this.timerCounter++;
-    if (this.timerCounter > 168) this.scene.restart();
-
-    for (let y of this.cityGrid) {
-      for (let cell of y){
-        if  (cell.type !== 'road'){
-
-          // console.log(cell);
-          let mortalWound = 0;
-          if (cell.immune){
-            cell.sprite.setTint(0xFFFFFF);//// TODO
-            cell.atRisk = false;
-            cell.infected = false;
-          } else if (cell.infected){
-            // cell.atRisk = false;
-            cell.sprite.setTint(0x89a203);//// TODO
-            //everyone in building block becomes atRisk
-            // this.cityPlanner[cell.id].forEach(c => c.atRisk = (Math.random() > 0.2) ? true : false);
-            // cell.sprite.setTint(0x89a203);//// TODO
-            mortalWound += (Math.random() > 0.6) ? 5 : 0;
-            cell.timeToHeal -= Phaser.Math.Between(1, 3);
-            if (cell.timeToHeal < 0) cell.immune = true;
-          } else if (cell.atRisk){
-            cell.sprite.setTint(0xffa236);//// TODO
-            cell.infected = (Math.random() > 0.98) ? true : false;
-            cell.immune = (Math.random() > 0.995) ? true : false;
-          } else {
-            cell.infected = (Math.random() > 0.9994) ? Phaser.Math.Between(3,5) : 0;
-          }
-
-          if (cell.influenza > 0) {
-            cell.sprite.setAlpha(0.3);///// TODO
-            if (cell.influenza > 5) this.cityPlanner[cell.id].forEach(c => c.influenza = (Math.random() > 0.2) ? Phaser.Math.Between(3,5) : 0);
-            cell.influenza -= Phaser.Math.Between(2,3);
-            mortalWound += (Math.random > 0.4) ? 1 : 0;
-          } else {
-            cell.sprite.setAlpha(1);///// TODO
-            cell.influenza = (Math.random() > 0.994 && cell.influenza >= 0) ? Phaser.Math.Between(1,7) : 0;
-          }
-          mortalWound += (Math.random() > 0.999) ? 5 : (Math.random() > 0.8) ? -1 : 0;
-          cell.health -= mortalWound;
-          if (cell.health <= 0) {
-            let cs = cell.sprite;
-            let counter = this.add.image(cs.x-5 + ((cell.deaths.length%3)*5), cs.y + Math.floor((cell.deaths.length/3)), 'black_dot');
-
-            cell.deaths.push([cell.influenza, cell.infected]);
-            cell.health = Phaser.Math.Between(3,7);
-          }
-        }
-
-      }
-    }
+    // this.add.image(0, 0, 'test').setOrigin(0).setScale(2);
   }
 
   update(time, delta){
-    const mInput = this.input.activePointer;
-    this.mapUIOverlay.setPosition(mInput.x, mInput.y);
+    //bad line unbalances game
+    // if (this.score < 0 || this.reputation < 0) this.scene.start('end', 'You know nothing John Snow!');
+    if (this.fastForward){
+      console.log(this.fastForward);
+      this.time.addEvent({ delay: 100, callback: this.onEvent, callbackScope: this, repeat: this.fastForward });
+      this.fastForward = 0;
+    }
+
+    this.textUI.setText(`${Math.floor(this.timerCounter/24)}  ${this.timerCounter%24}`);
   }
   handleKey(e) {
     switch(e.code) {
       case 'KeyS': {
-        console.log('keyS is down');
+        // console.log('keyS is down');
         break;
       }
       case 'Enter': {
@@ -241,10 +314,87 @@ class House extends Phaser.Scene {
   }
 
 
+  onEvent(){
+    this.score -= 10;
+    if (this.timerCounter % 24 === 0){
+      this.timerDelay = 500;
+    } else {
+      this.timerDelay = 50;
+    }
+    this.time.addEvent({ delay: this.timerDelay, callback: this.onEvent, callbackScope: this});
+    if (this.timerCounter > 240) {
+      this.time.addEvent({ delay: 500, callback: () => this.scene.start('house', this.score), callbackScope: this, loop: true });
+      return;
+    }
+    this.timerCounter++;
+
+    // this.clickSound.play();
+    // if (this.timerCounter > 240) this.scene.start('house', this.score);
+    if (this.timerCounter%4 === 0) console.log(this.choleraDeathsCounter, this.influenzaDeathsCounter, this.otherDeathsCounter);
+    for (let y of this.cityGrid) {
+      for (let cell of y){
+        if  (cell.type !== 'road'){
+
+          // console.log(cell);
+          //death counter algorithm, tracks a health integer on each cell. If health < 0, then counter increases by 1.
+          let mortalWound = 0;
+          if (cell.immune){
+            cell.atRisk = false;
+            cell.infected = false;
+          } else if (cell.infected){
+            cell.sprite.setTint(0x00ff00); //// TODO:
+            mortalWound += (Math.random() > 0.6) ? 1 : 0;
+            cell.timeToHeal -= Phaser.Math.Between(0,2);
+            if (cell.timeToHeal < 0) cell.immune = true;
+          } else if (cell.atRisk){
+            // cell.sprite.setTint(0xff00ff); //// TODO:
+            cell.infected = (Math.random() > 0.99) ? true : false;
+            // cell.immune = (Math.random() > 0.9995) ? true : false;
+          } else if (this.timerCounter < 48) {
+            cell.infected = (Math.random() > 0.9999) ? true : false;
+          }
+
+
+          //testing influenza-type disease. Will change to miasma... I think
+          if (cell.influenza > 0) {
+            cell.sprite.setTint(0x0000AA); //// TODO:
+            if (cell.influenza > 5) this.cityPlanner[cell.id].forEach(c => c.influenza = (Math.random() > 0.6 && c.influenzaRisk) ? Phaser.Math.Between(12,72) : 0);
+            cell.influenza -= Phaser.Math.Between(2,12);
+            if (cell.influenza < 0) cell.influenzaRisk = false;
+            mortalWound += Phaser.Math.Between(0,2);
+          } else {
+            if (!cell.infected) cell.sprite.setTint(0xffffff); //// TODO:
+            cell.influenza = (Math.random() > 0.999 && cell.influenzaRisk) ? Phaser.Math.Between(36,72) : 0;
+          }
+
+          mortalWound += (Math.random() > 0.99) ? 7 : (Math.random() > 0.8) ? -1 : 0;
+          cell.health -= mortalWound;
+          if (cell.health <= 0) {
+            let cs = cell.sprite;
+            let ticker = cell.deathCounters.list.length;
+
+            let deathCounter = this.add.image(cs.x + ((ticker%3)*2), cs.y + Math.floor((ticker/3))*2, 'white_dot').setOrigin(0);
+            if (cell.infected) {
+              this.choleraDeathsCounter++
+              // deathCounter.setTint(0x000000);
+            } else if (cell.influenza !== 0){
+              this.influenzaDeathsCounter++
+            } else {
+              this.otherDeathsCounter++;
+              // deathCounter.setTint(0xaa5500);
+            }
+            deathCounter.setTint(0x000000);
+            cell.deathCounters.add(deathCounter);
+            cell.health = Phaser.Math.Between(7,17);
+          }
+        }
+      }
+    }
+  }
 
 
 
-  drawCityGrid(mapSizeX = 40, mapSizeY = 25, cellSize = 16){
+  drawCityGrid(mapSizeX, mapSizeY, cellSize){
 
 
     var TYPES = {
@@ -259,21 +409,14 @@ class House extends Phaser.Scene {
       return Math.random() * (max - min) + min;
     }
 
-    function getRandomColor() {
-      var letters = '0123456789ABCDEF';
-      var color = '#';
-      for (var i = 0; i < 6; i++) {
-        color += letters[Math.floor(Math.random() * 16)];
-      }
-      return color;
-    }
 
     function Cell(i, j) {
       this.i = i;
       this.j = j;
+
       this.type = TYPES.ROAD;
       this.id = -1;
-      this.color = "";
+
       this.atRisk = false;
       this.infected = false;
     }
@@ -370,7 +513,7 @@ class House extends Phaser.Scene {
     // Get a random order to loop through the cells
     var checkOrder = shuffle(GetAllCells());
     var minSize = 4;
-    var maxSize = 10;
+    var maxSize = 8;
 
     for (var id = 1; id < checkOrder.length; id++) {
       var curTile = checkOrder[id];
@@ -382,7 +525,6 @@ class House extends Phaser.Scene {
 
         var zones = [TYPES.RESIDENTIAL, TYPES.COMMERCIAL, TYPES.COMMERCIAL, TYPES.RESIDENTIAL, TYPES.INDUSTRIAL];
         var zone = zones[Math.floor(Math.random() * zones.length)];
-        var color = getRandomColor();
 
         for (var i = 0; i < square_width; i+=2) {
           for (var j = 0; j < square_height; j+=2) {
