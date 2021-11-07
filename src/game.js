@@ -175,6 +175,10 @@ class Game extends Phaser.Scene {
   handleKey(e) {
     if (!this.enableInput) return;
     switch(e.code) {
+      case 'KeyF':{
+        this.fastForward(50, 1);
+        break;
+      }
       case 'KeyM':{
         this.scene.start('start');
         break;

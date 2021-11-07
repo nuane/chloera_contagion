@@ -151,7 +151,7 @@ var generateCity = new Phaser.Class({
     const voronoi = delaunay.voronoi([0, 0, cityWidth, cityHeight]);
     let polygons = Array.from(voronoi.cellPolygons());
     let voronoi_cell_lines = [];
-    //let graphics = scene.add.graphics({ lineStyle: { width: 2, color: 0xaa6622 } }); //uncomment to see voronoi cell lines
+    let graphics = scene.add.graphics({ lineStyle: { width: 2, color: 0x55ff55 } }); //uncomment to see voronoi cell lines
 
     //iterate through polygon output to set to game logic
     this.waterPumpPolygonalArea = [];
@@ -159,7 +159,7 @@ var generateCity = new Phaser.Class({
       let [index, ...polyPoints] = polygon;
       let phaserPolygon = new Phaser.Geom.Polygon(polyPoints);
       this.waterPumpPolygonalArea.push(phaserPolygon);
-      // graphics.strokePoints(phaserPolygon.points, true);//uncomment to see voronoi lines
+      graphics.strokePoints(phaserPolygon.points, true);//uncomment to see voronoi lines
     }
 
     //sets district/building as choleraRisk instead of individual cell in radius of badWaterPump
@@ -273,7 +273,7 @@ var generateCity = new Phaser.Class({
             cell.choleraInfection = false;
           //block infected w cholera
           } else if (cell.choleraInfection){
-            // cell.sprite.setTint(0xA00000); //uncomment to see CHOLERA
+            cell.sprite.setTint(0xA00000); //uncomment to see CHOLERA
             //cholera has 40% chance of causing 1 damage
             mortalWound += (Math.random() > 0.6) ? 1 : 0;
             cell.choleraMeter -= Phaser.Math.Between(0,2);
