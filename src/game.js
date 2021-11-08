@@ -175,8 +175,15 @@ class Game extends Phaser.Scene {
   handleKey(e) {
     if (!this.enableInput) return;
     switch(e.code) {
+      //// TODO: used for displaying logic, DELETE
       case 'KeyF':{
         this.fastForward(50, 1);
+        this.city.allCityCells.forEach(cell => cell.deathCounters.forEach(counter => {
+            let dot = this.add.image(counter[0], counter[1], 'black_dot').setOrigin(0);
+            dot.causeOfDeath = counter[2];
+            cell.deathCounterSprites.add(dot);
+            cell.sprite.clearTint();
+        }));
         break;
       }
       case 'KeyM':{
@@ -195,10 +202,10 @@ class Game extends Phaser.Scene {
         let block = Object.keys(this.city.cityPlanner);
         let rndProp = block[Phaser.Math.Between(0,block.length)];
         let rndBlock = this.city.cityPlanner[rndProp];
+
+        if (rndBlock == undefined) return; //prevents overflow and uncaught error
         let rndCell = undefined;
-        while (rndCell == undefined) {
-          rndCell = rndBlock[Phaser.Math.Between(0,rndBlock.length)];
-        }
+        while (rndCell == undefined) rndCell = rndBlock[Phaser.Math.Between(0,rndBlock.length)];
 
         this.select('residential', rndCell, this.city.cityPlanner);
         break;
@@ -211,6 +218,12 @@ class Game extends Phaser.Scene {
     this.timerCounter++;
     this.stamina--;
     if (this.enableMasterSound && this.enableSound && !this.isMuted) this.bloopLayer1.play();
+// TODO: delete
+    this.city.allCityCells.forEach(cell => {
+        cell.sprite.clearTint();
+    });
+
+
     this.city.cycleCities();
     this.insightAction();
   }

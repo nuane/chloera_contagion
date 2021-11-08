@@ -27,6 +27,7 @@ class Start extends Phaser.Scene {
     this.scrollingText1 = this.add.text(10, this.scrollingText0.height, text1, { fontFamily: 'Cursive', fontSize: 14, color: '#aaaaaa', wordWrap: { width: 310 } });
 
     this.add.text(10, 10, 'CHOLERA\n   CONTAGION', { fontFamily: 'Cursive', fontSize: 18, color: '#ffffff', backgroundColor: '#000000', wordWrap: {width: 0}});
+    this.add.text(160, 10, 'Game, Music, Graphics Created By:\n B. Michael Krantz', { fontFamily: 'Fantasy', fontSize: 10, color: '#ffffff', backgroundColor: '#000000' });
     this.add.text(230, 120, 'difficulty:', { fontFamily: 'URW Chancery L, Fantasy', fontSize: 14, color: '#ffffff', backgroundColor: '#000000', wordWrap: {width: 0}});
 
     this.config = {
@@ -37,7 +38,7 @@ class Start extends Phaser.Scene {
     }
 
     this.muse = this.sound.add('greensleeve');
-    this.muse.play(); 
+    this.muse.play();
 
     //new game
     let classicGame = this.createMenuButton(20, 100, `Classic Game`, true);

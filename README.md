@@ -7,13 +7,24 @@ https://supersleepygrumpybear.itch.io/cholera-contagion
 
 Uses a basic square overlap procedural generation. Infection spreads around water-pumps based on Voronoi Diagram
 
-# Phaser 3 Webpack Project Template
+![](https://github.com/nuane/chloera_contagion/tree/master/assets/cc_gifA.gif)
+![](https://github.com/nuane/chloera_contagion/tree/master/assets/cc_gifB.gif)
+![](https://github.com/nuane/chloera_contagion/tree/master/assets/cc_gifC.gif)
+![](https://github.com/nuane/chloera_contagion/tree/master/assets/cc_gifD.gif)
+![](https://github.com/nuane/chloera_contagion/tree/master/assets/cc_gifE.gif)
+![](https://github.com/nuane/chloera_contagion/tree/master/assets/cc_gifO.gif)
+
+https://github.com/nuane/chloera_contagion/blob/master/assets/cholera.png
+
+# Built Using Phaser 3 Webpack Project Template
+
+BOILERPLATE used to build Cholera Contagion
+
+https://github.com/photonstorm/phaser3-project-template
 
 Uses Phaser 3 project template with ES6 support via [Babel 7](https://babeljs.io/) and [Webpack 4](https://webpack.js.org/) that includes hot-reloading for development and production-ready builds.
 
-This has been updated for Phaser 3.50.0 version and above.
-
-Loading images via JavaScript module `import` is also supported, although not recommended.
+Updated for Phaser 3.50.0 version and above.
 
 ## Requirements
 
